@@ -81,7 +81,7 @@ const UserInformation = () => {
   }
 
   return (
-    <div className="max-w-md">
+    <div className="w-full max-w-2xl">
       <h3 className="text-lg font-semibold py-4">User Information</h3>
       <Form {...form}>
         <form
@@ -105,7 +105,7 @@ const UserInformation = () => {
                   <FormLabel>Full name</FormLabel>
                   <p
                     className={cn(
-                      "py-2 truncate max-w-sm",
+                      "max-w-full wrap-break-word py-2",
                       !field.value && "text-muted-foreground",
                     )}
                   >
@@ -131,13 +131,13 @@ const UserInformation = () => {
               ) : (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
-                  <p className="py-2 truncate max-w-sm">{field.value}</p>
+                  <p className="max-w-full wrap-break-word py-2">{field.value}</p>
                 </FormItem>
               )
             }
           />
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {editMode ? (
               <>
                 <LoadingButton

@@ -22,7 +22,7 @@ export function Logo({
           src={logo}
           alt="Brilliant Office Solutions"
           className={cn(
-            "h-6 w-auto group-data-[collapsible=icon]:hidden",
+            "h-6 w-auto sm:h-7 lg:h-6 group-data-[collapsible=icon]:hidden",
             className,
           )}
         />
@@ -30,7 +30,7 @@ export function Logo({
           src={icon}
           alt="Brilliant Office Solutions"
           className={cn(
-            "size-5 hidden group-data-[collapsible=icon]:block",
+            "hidden h-6 w-auto sm:h-7 lg:h-6 group-data-[collapsible=icon]:block",
             className,
           )}
         />
@@ -39,7 +39,12 @@ export function Logo({
       <img
         src={variant === "full" ? logo : icon}
         alt="Brilliant Office Solutions"
-        className={cn(variant === "full" ? "h-6 w-auto" : "size-5", className)}
+        className={cn(
+          variant === "full"
+            ? "h-6 w-auto sm:h-7 lg:h-6"
+            : "h-6 w-auto sm:h-7 lg:h-6",
+          className,
+        )}
       />
     )
 

@@ -1,6 +1,7 @@
 import { Link as RouterLink } from "@tanstack/react-router"
 import { ChevronsUpDown, LogOut, Settings } from "lucide-react"
 
+import type { UserPublic } from "@/client"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -24,6 +25,9 @@ interface UserInfoProps {
   email?: string
 }
 
+const toOptionalString = (value: string | null | undefined): string | undefined =>
+  value ?? undefined
+
 function UserInfo({ fullName, email }: UserInfoProps) {
   return (
     <div className="flex items-center gap-2.5 w-full min-w-0">
@@ -40,7 +44,45 @@ function UserInfo({ fullName, email }: UserInfoProps) {
   )
 }
 
-export function User({ user }: { user: any }) {
+function UserMenuContent({
+  fullName,
+  email,
+  isMobile,
+  onNavigate,
+  onLogout,
+}: {
+  fullName?: string
+  email?: string
+  isMobile: boolean
+  onNavigate: () => void
+  onLogout: () => void
+}) {
+  return (
+    <DropdownMenuContent
+      className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+      side={isMobile ? "bottom" : "right"}
+      align="end"
+      sideOffset={4}
+    >
+      <DropdownMenuLabel className="p-0 font-normal">
+        <UserInfo fullName={fullName} email={email} />
+      </DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      <RouterLink to="/settings" onClick={onNavigate}>
+        <DropdownMenuItem>
+          <Settings />
+          User Settings
+        </DropdownMenuItem>
+      </RouterLink>
+      <DropdownMenuItem onClick={onLogout}>
+        <LogOut />
+        Log Out
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  )
+}
+
+export function User({ user }: { user: UserPublic | null | undefined }) {
   const { logout } = useAuth()
   const { isMobile, setOpenMobile } = useSidebar()
 
@@ -65,33 +107,62 @@ export function User({ user }: { user: any }) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               data-testid="user-menu"
             >
-              <UserInfo fullName={user?.full_name} email={user?.email} />
+              <UserInfo
+                fullName={toOptionalString(user.full_name)}
+                email={toOptionalString(user.email)}
+              />
               <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <UserInfo fullName={user?.full_name} email={user?.email} />
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <RouterLink to="/settings" onClick={handleMenuClick}>
-              <DropdownMenuItem>
-                <Settings />
-                User Settings
-              </DropdownMenuItem>
-            </RouterLink>
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut />
-              Log Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+          <UserMenuContent
+            fullName={toOptionalString(user.full_name)}
+            email={toOptionalString(user.email)}
+            isMobile={isMobile}
+            onNavigate={handleMenuClick}
+            onLogout={handleLogout}
+          />
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+  )
+}
+
+export function UserCompactMenu({
+  user,
+}: { user: UserPublic | null | undefined }) {
+  const { logout } = useAuth()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  if (!user) return null
+
+  const handleMenuClick = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center rounded-full p-1 hover:bg-accent"
+          data-testid="user-menu-compact"
+        >
+          <Avatar className="size-8">
+            <AvatarFallback className="bg-primary text-white">
+              {getInitials(toOptionalString(user.full_name) || "User")}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <UserMenuContent
+        fullName={toOptionalString(user.full_name)}
+        email={toOptionalString(user.email)}
+        isMobile={isMobile}
+        onNavigate={handleMenuClick}
+        onLogout={logout}
+      />
+    </DropdownMenu>
   )
 }

@@ -43,7 +43,7 @@ function UserSettings() {
       </div>
 
       <Tabs defaultValue="my-profile">
-        <TabsList>
+        <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
           {finalTabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
               {tab.title}
