@@ -9,6 +9,74 @@
 
 Start the local development environment with Docker Compose following the guide in [../development.md](../development.md).
 
+## Temporal (Dedicated Worker Service)
+
+The stack includes Temporal as separate infrastructure plus a dedicated worker service.
+
+- Temporal gRPC endpoint: `temporal:7233` (host: `localhost:7233`)
+- Temporal UI: `http://temporal.localhost` (via Traefik in local dev)
+- Worker process: `temporal-worker` service (separate from FastAPI API process)
+
+### Local run
+
+From the project root:
+
+```console
+$ docker compose watch
+```
+
+This starts:
+
+- `temporal-db` (Temporal metadata Postgres)
+- `temporal` (Temporal server)
+- `temporal-ui` (Temporal web UI)
+- `temporal-worker` (Python SDK worker for workflows/activities)
+
+### Worker/module layout
+
+- `app/temporal/client.py`: Temporal client factory
+- `app/temporal/worker.py`: dedicated worker entrypoint (register workflows and activities here as you add them)
+
+### Reliability defaults and standards
+
+- Set activity timeouts and retry policies per activity type in workflow code.
+- Use task queues per domain when workloads diverge (e.g. `payments`, `notifications`).
+- Keep workflow logic deterministic; move non-deterministic I/O into activities.
+
+### Versioning and safe deployment guidance
+
+- Never break in-flight executions by changing workflow behavior incompatibly.
+- Prefer introducing new workflow names/types for breaking changes.
+- Roll out worker changes gradually; canary a subset of workers before full rollout.
+- Keep task queue and namespace stable per environment unless migration is intentional.
+
+## MinIO Private Document Storage
+
+The stack includes MinIO for private object storage with backend-controlled access.
+
+- MinIO API (local): `http://localhost:9000`
+- MinIO Console (local): `http://localhost:9001`
+- Bucket: `private-documents` (created by `minio-init`)
+- Bucket policy: private (no anonymous object access)
+
+### Access model
+
+- Documents are uploaded and managed only through authenticated backend APIs.
+- MinIO object keys are never treated as public URLs.
+- Document bytes are served by backend streaming endpoints after auth checks.
+- Direct object reads from browser are denied by MinIO because bucket stays private.
+
+### Document endpoints
+
+Authenticated endpoints under `/api/v1/documents`:
+
+- `POST /upload` (multipart file upload)
+- `GET /` (list current user's documents; superuser sees all)
+- `GET /{document_id}` (document metadata)
+- `GET /{document_id}/access-link` (backend route path to streaming download endpoint)
+- `GET /{document_id}/download` (backend-streamed private download)
+- `DELETE /{document_id}` (delete object + metadata)
+
 ## General Workflow
 
 By default, the dependencies are managed with [uv](https://docs.astral.sh/uv/), go there and install it.

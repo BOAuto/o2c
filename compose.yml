@@ -1,3 +1,10 @@
+# Shared image/build for API, prestart, and Temporal worker (same code + deps for replay-safe deploys).
+x-backend-image-and-build: &backend_image_and_build
+  image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+
 services:
 
   db:
@@ -19,6 +26,99 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
 
+  temporal-db:
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_USER=${TEMPORAL_POSTGRES_USER?Variable not set}
+      - POSTGRES_PASSWORD=${TEMPORAL_POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_DB=${TEMPORAL_POSTGRES_DB?Variable not set}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TEMPORAL_POSTGRES_USER} -d ${TEMPORAL_POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+    volumes:
+      - temporal-db-data:/var/lib/postgresql/data
+
+  temporal:
+    image: temporalio/auto-setup:1.27.2
+    restart: always
+    depends_on:
+      temporal-db:
+        condition: service_healthy
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=${TEMPORAL_POSTGRES_USER?Variable not set}
+      - POSTGRES_PWD=${TEMPORAL_POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_SEEDS=temporal-db
+    healthcheck:
+      test: ["CMD-SHELL", "tctl --address temporal:7233 cluster health | grep -q SERVING"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 180s
+
+  temporal-ui:
+    image: temporalio/ui:2.37.1
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      temporal:
+        condition: service_healthy
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_UI_PORT=8080
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.services.${STACK_NAME?Variable not set}-temporal-ui.loadbalancer.server.port=8080
+      - traefik.http.routers.${STACK_NAME?Variable not set}-temporal-ui-http.rule=Host(`temporal.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-temporal-ui-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME?Variable not set}-temporal-ui-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME?Variable not set}-temporal-ui-https.rule=Host(`temporal.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-temporal-ui-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-temporal-ui-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-temporal-ui-https.tls.certresolver=le
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER?Variable not set}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD?Variable not set}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      mc mb --ignore-existing local/${MINIO_BUCKET};
+      mc anonymous set none local/${MINIO_BUCKET};
+      mc admin user add local ${MINIO_APP_USER} ${MINIO_APP_PASSWORD} || true;
+      printf '%s' '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:GetBucketLocation\",\"s3:ListBucket\"],\"Resource\":[\"arn:aws:s3:::${MINIO_BUCKET}\"]},{\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:PutObject\",\"s3:DeleteObject\"],\"Resource\":[\"arn:aws:s3:::${MINIO_BUCKET}/*\"]}]}' > /tmp/app-policy.json;
+      mc admin policy create local app-docs-policy /tmp/app-policy.json || true;
+      mc admin policy attach local app-docs-policy --user ${MINIO_APP_USER};
+      "
+
   adminer:
     image: adminer
     restart: always
@@ -27,6 +127,7 @@ services:
       - default
     depends_on:
       - db
+      - minio
     environment:
       - ADMINER_DESIGN=pepa-linha-dark
     labels:
@@ -43,10 +144,7 @@ services:
       - traefik.http.services.${STACK_NAME?Variable not set}-adminer.loadbalancer.server.port=8080
 
   prestart:
-    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    <<: *backend_image_and_build
     networks:
       - traefik-public
       - default
@@ -54,6 +152,10 @@ services:
       db:
         condition: service_healthy
         restart: true
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     command: bash scripts/prestart.sh
     env_file:
       - .env
@@ -75,9 +177,14 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - SENTRY_DSN=${SENTRY_DSN}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_APP_USER?Variable not set}
+      - MINIO_SECRET_KEY=${MINIO_APP_PASSWORD?Variable not set}
+      - MINIO_BUCKET=${MINIO_BUCKET?Variable not set}
+      - MINIO_SECURE=${MINIO_SECURE-false}
 
   backend:
-    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    <<: *backend_image_and_build
     restart: always
     networks:
       - traefik-public
@@ -86,6 +193,12 @@ services:
       db:
         condition: service_healthy
         restart: true
+      temporal:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
       prestart:
         condition: service_completed_successfully
     env_file:
@@ -108,6 +221,15 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - SENTRY_DSN=${SENTRY_DSN}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_APP_USER?Variable not set}
+      - MINIO_SECRET_KEY=${MINIO_APP_PASSWORD?Variable not set}
+      - MINIO_BUCKET=${MINIO_BUCKET?Variable not set}
+      - MINIO_SECURE=${MINIO_SECURE-false}
+      - TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS-temporal:7233}
+      - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE-default}
+      - TEMPORAL_TASK_QUEUE=${TEMPORAL_TASK_QUEUE-default}
+      - TEMPORAL_EAGER_CONNECT=${TEMPORAL_EAGER_CONNECT-true}
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
@@ -115,9 +237,6 @@ services:
       timeout: 5s
       retries: 5
 
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
@@ -136,6 +255,54 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.middlewares=https-redirect
 
+  temporal-worker:
+    <<: *backend_image_and_build
+    restart: always
+    depends_on:
+      temporal:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      - DOMAIN=${DOMAIN}
+      - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+      - SECRET_KEY=${SECRET_KEY?Variable not set}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - SENTRY_DSN=${SENTRY_DSN}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_APP_USER?Variable not set}
+      - MINIO_SECRET_KEY=${MINIO_APP_PASSWORD?Variable not set}
+      - MINIO_BUCKET=${MINIO_BUCKET?Variable not set}
+      - MINIO_SECURE=${MINIO_SECURE-false}
+      - TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS-temporal:7233}
+      - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE-default}
+      - TEMPORAL_TASK_QUEUE=${TEMPORAL_TASK_QUEUE-default}
+    command: ["python", "-m", "app.temporal.worker"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "from pathlib import Path; raise SystemExit(0 if 'app.temporal.worker' in Path('/proc/1/cmdline').read_text() else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   frontend:
     image: '${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}'
     restart: always
@@ -146,7 +313,9 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        - VITE_API_URL=https://api.${DOMAIN?Variable not set}
+        # Empty: browser calls /api on dashboard host; nginx proxies to backend (same-origin, no CORS).
+        # api.${DOMAIN} remains available via Traefik for direct API clients and docs.
+        - VITE_API_URL=
         - NODE_ENV=production
     labels:
       - traefik.enable=true
@@ -167,6 +336,8 @@ services:
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 volumes:
   app-db-data:
+  temporal-db-data:
+  minio-data:
 
 networks:
   traefik-public:

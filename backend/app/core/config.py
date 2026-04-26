@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
+    # Used for Traefik host rules in compose and to derive canonical CORS origins in prod.
+    DOMAIN: str = "localhost"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[
@@ -44,12 +46,45 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def all_cors_origins(self) -> list[str]:
-        return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
-            self.FRONTEND_HOST
+        """Origins allowed for cross-origin browser calls (e.g. api.* docs, legacy SPA builds).
+
+        Primary production path: SPA on dashboard.* uses same-origin /api (nginx -> backend),
+        which does not require CORS. These entries still cover tooling, mistakes, and api.* UIs.
+        """
+        origins: list[str] = [
+            str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS
         ]
+        origins.append(self.FRONTEND_HOST.rstrip("/"))
+        if self.DOMAIN:
+            origins.extend(
+                [
+                    f"http://dashboard.{self.DOMAIN}",
+                    f"https://dashboard.{self.DOMAIN}",
+                    f"http://api.{self.DOMAIN}",
+                    f"https://api.{self.DOMAIN}",
+                ]
+            )
+        seen: set[str] = set()
+        out: list[str] = []
+        for origin in origins:
+            if origin and origin not in seen:
+                seen.add(origin)
+                out.append(origin)
+        return out
 
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
+    MINIO_ENDPOINT: str = "minio:9000"
+    MINIO_ACCESS_KEY: str = "minioapp"
+    MINIO_SECRET_KEY: str = "minioapp123"
+    MINIO_BUCKET: str = "private-documents"
+    MINIO_SECURE: bool = False
+    TEMPORAL_ADDRESS: str = "temporal:7233"
+    TEMPORAL_NAMESPACE: str = "default"
+    TEMPORAL_TASK_QUEUE: str = "default"
+    #: Connect to Temporal during API startup (Compose sets true). False avoids requiring
+    #: Temporal for pytest and local runs that never touch workflow routes.
+    TEMPORAL_EAGER_CONNECT: bool = False
     POSTGRES_SERVER: str
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str

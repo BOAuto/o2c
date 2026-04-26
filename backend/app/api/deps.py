@@ -1,17 +1,22 @@
+import asyncio
 from collections.abc import Generator
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlmodel import Session
+from temporalio.client import Client
 
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
 from app.models import TokenPayload, User
+from app.temporal.client import connect_temporal_client
+
+_temporal_client_init_lock = asyncio.Lock()
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -55,3 +60,16 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+async def get_temporal_client(request: Request) -> Client:
+    existing = getattr(request.app.state, "temporal_client", None)
+    if existing is not None:
+        return existing
+    async with _temporal_client_init_lock:
+        if getattr(request.app.state, "temporal_client", None) is None:
+            request.app.state.temporal_client = await connect_temporal_client()
+        return request.app.state.temporal_client
+
+
+TemporalClientDep = Annotated[Client, Depends(get_temporal_client)]

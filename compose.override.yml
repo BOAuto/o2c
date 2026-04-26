@@ -50,6 +50,28 @@ services:
     ports:
       - "5432:5432"
 
+  temporal-db:
+    restart: "no"
+
+  temporal:
+    restart: "no"
+    ports:
+      - "7233:7233"
+
+  temporal-ui:
+    restart: "no"
+    ports:
+      - "8088:8080"
+
+  minio:
+    restart: "no"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  minio-init:
+    restart: "no"
+
   adminer:
     restart: "no"
     ports:
@@ -86,6 +108,38 @@ services:
       SMTP_PORT: "1025"
       SMTP_TLS: "false"
       EMAILS_FROM_EMAIL: "noreply@example.com"
+      TEMPORAL_ADDRESS: "temporal:7233"
+      TEMPORAL_NAMESPACE: "default"
+      TEMPORAL_TASK_QUEUE: "default"
+      TEMPORAL_EAGER_CONNECT: "true"
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_BUCKET: "private-documents"
+      MINIO_SECURE: "false"
+
+  temporal-worker:
+    restart: "no"
+    command: ["python", "-m", "app.temporal.worker"]
+    develop:
+      watch:
+        - path: ./backend
+          action: sync
+          target: /app/backend
+          ignore:
+            - ./backend/.venv
+            - .venv
+        - path: ./backend/pyproject.toml
+          action: rebuild
+    environment:
+      SMTP_HOST: "mailcatcher"
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      EMAILS_FROM_EMAIL: "noreply@example.com"
+      TEMPORAL_ADDRESS: "temporal:7233"
+      TEMPORAL_NAMESPACE: "default"
+      TEMPORAL_TASK_QUEUE: "default"
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_BUCKET: "private-documents"
+      MINIO_SECURE: "false"
 
   mailcatcher:
     image: schickling/mailcatcher
@@ -94,14 +148,21 @@ services:
       - "1025:1025"
 
   frontend:
-    restart: "no"
+    # Keep the UI coming back after crashes / Docker restarts. `restart: "no"` meant a
+    # failed or exited container (e.g. port 5173 in use) stayed down until you ran
+    # `docker compose up frontend` again.
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
     ports:
       - "5173:80"
     build:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        - VITE_API_URL=http://localhost:8000
+        # Same-origin /api via nginx -> backend (avoids browser CORS to :8000)
+        - VITE_API_URL=
         - NODE_ENV=development
 
   playwright:
