@@ -238,3 +238,21 @@ The email templates are in `./backend/app/email-templates/`. Here, there are two
 Before continuing, ensure you have the [MJML extension](https://github.com/mjmlio/vscode-mjml) installed in your VS Code.
 
 Once you have the MJML extension installed, you can create a new email template in the `src` directory. After creating the new email template and with the `.mjml` file open in your editor, open the command palette with `Ctrl+Shift+P` and search for `MJML: Export to HTML`. This will convert the `.mjml` file to a `.html` file and now you can save it in the build directory.
+
+## Backbone Business Modules
+
+This backend now includes foundational business modules used before Temporal orchestration:
+
+- `mail-access` APIs
+  - singleton `centralOrderMail` config
+  - user-linked mail privileges (`OrderUser`, `OrderInternalUser`)
+  - encrypted app-password storage at rest
+- `companies` + `rate-contracts` + `validations` APIs
+  - client/company master data
+  - domain pattern mapping
+  - payment-term and rate-contract support
+  - validation catalog/assignment (empty by default; managed via UI)
+- `branches` APIs
+  - internal branch master data (separate from client entities)
+  - required/unique branch GSTIN
+  - GST state reference and branch-state mapping

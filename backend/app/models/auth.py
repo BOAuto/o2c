@@ -1,16 +1,14 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from pydantic import EmailStr
 from sqlalchemy import DateTime
 from sqlmodel import Field, SQLModel
 
+from app.models.base import get_datetime_utc
+from app.models.mail_access import MailAccessType
 
-def get_datetime_utc() -> datetime:
-    return datetime.now(timezone.utc)
 
-
-# Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = True
@@ -18,9 +16,10 @@ class UserBase(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
 
 
-# Properties to receive via API on creation
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
+    mail_access_type: MailAccessType | None = None
+    mail_app_password: str | None = Field(default=None, min_length=8, max_length=255)
 
 
 class UserRegister(SQLModel):
@@ -29,10 +28,11 @@ class UserRegister(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
 
 
-# Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore[assignment]
     password: str | None = Field(default=None, min_length=8, max_length=128)
+    mail_access_type: MailAccessType | None = None
+    mail_app_password: str | None = Field(default=None, min_length=8, max_length=255)
 
 
 class UserUpdateMe(SQLModel):
@@ -45,7 +45,6 @@ class UpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
-# Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
@@ -55,24 +54,6 @@ class User(UserBase, table=True):
     )
 
 
-class DocumentBase(SQLModel):
-    file_name: str = Field(max_length=255)
-    mime_type: str | None = Field(default=None, max_length=255)
-
-
-class Document(DocumentBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    uploaded_by_user_id: uuid.UUID = Field(index=True, nullable=False)
-    object_key: str = Field(unique=True, index=True, max_length=512)
-    size_bytes: int
-    content_hash: str = Field(max_length=64)
-    created_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-    )
-
-
-# Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: uuid.UUID
     created_at: datetime | None = None
@@ -83,34 +64,11 @@ class UsersPublic(SQLModel):
     count: int
 
 
-class DocumentPublic(DocumentBase):
-    id: uuid.UUID
-    uploaded_by_user_id: uuid.UUID
-    size_bytes: int
-    created_at: datetime | None = None
-
-
-class DocumentsPublic(SQLModel):
-    data: list[DocumentPublic]
-    count: int
-
-
-# Generic message
-class Message(SQLModel):
-    message: str
-
-
-class DocumentAccessLink(SQLModel):
-    url: str
-
-
-# JSON payload containing access token
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
 
 
-# Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
 

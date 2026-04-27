@@ -19,6 +19,7 @@ dependencies = [
     "sentry-sdk[fastapi]>=2.0.0,<3.0.0",
     "pyjwt<3.0.0,>=2.8.0",
     "pwdlib[argon2,bcrypt]>=0.3.0",
+    "cryptography>=45.0.0,<46.0.0",
     "temporalio>=1.8.0,<2.0.0",
     "minio>=7.2.18,<8.0.0",
     # https://github.com/ikvk/imap_tools — IMAP fetch/search/mailbox utilities

@@ -1,4 +1,4 @@
-import { Home, Users } from "lucide-react"
+import { Building2, Home, Mail, Users, Workflow } from "lucide-react"
 
 import { Logo } from "@/components/Common/Logo"
 import {
@@ -23,7 +23,14 @@ export function AppSidebar() {
   const { isMobile } = useSidebar()
 
   const items = currentUser?.is_superuser
-    ? [...baseItems, { icon: Users, title: "Admin", path: "/admin" }]
+    ? [
+        ...baseItems,
+        { icon: Users, title: "Admin", path: "/admin" },
+        { icon: Mail, title: "Mail Access", path: "/mail-access" },
+        { icon: Building2, title: "Companies", path: "/companies" },
+        { icon: Building2, title: "Company Validations", path: "/company-validations" },
+        { icon: Workflow, title: "Branches", path: "/branches" },
+      ]
     : baseItems
 
   return (

@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Pencil } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { MailAccessApi } from "@/lib/api/mailAccessApi"
 import { handleError } from "@/utils"
 
 const formSchema = z
@@ -43,6 +44,8 @@ const formSchema = z
     confirm_password: z.string().optional(),
     is_superuser: z.boolean().optional(),
     is_active: z.boolean().optional(),
+    mail_access_type: z.enum(["OrderUser", "OrderInternalUser"]).optional(),
+    mail_app_password: z.string().optional(),
   })
   .refine((data) => !data.password || data.password === data.confirm_password, {
     message: "The passwords don't match",
@@ -60,6 +63,10 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const { data: userMailAccesses } = useQuery({
+    queryKey: ["userMailAccesses"],
+    queryFn: MailAccessApi.listUserMailAccesses,
+  })
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -72,6 +79,35 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
       is_active: user.is_active,
     },
   })
+  const currentMailAccessType = useMemo(() => {
+    const rows = (
+      userMailAccesses as
+        | {
+            data?: Array<{
+              user_id: string
+              access_type: "OrderUser" | "OrderInternalUser"
+              is_active: boolean
+            }>
+          }
+        | undefined
+    )?.data
+    const row = rows?.find((item) => item.user_id === String(user.id) && item.is_active)
+    return row?.access_type
+  }, [user.id, userMailAccesses])
+
+  useEffect(() => {
+    if (!isOpen) return
+    form.reset({
+      email: user.email,
+      full_name: user.full_name ?? undefined,
+      is_superuser: user.is_superuser,
+      is_active: user.is_active,
+      mail_access_type: currentMailAccessType,
+      mail_app_password: "",
+      password: "",
+      confirm_password: "",
+    })
+  }, [currentMailAccessType, form, isOpen, user.email, user.full_name, user.is_active, user.is_superuser])
 
   const mutation = useMutation({
     mutationFn: (data: FormData) =>
@@ -214,6 +250,48 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
                       />
                     </FormControl>
                     <FormLabel className="font-normal">Is active?</FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="mail_access_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mail Access Type</FormLabel>
+                    <FormControl>
+                      <select
+                        className="h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm"
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.value === "" ? undefined : e.target.value)
+                        }
+                      >
+                        <option value="">No mail access</option>
+                        <option value="OrderUser">OrderUser (IMAP + SMTP)</option>
+                        <option value="OrderInternalUser">OrderInternalUser (IMAP only)</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="mail_app_password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mail App Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Optional: rotate app password"
+                        type="password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

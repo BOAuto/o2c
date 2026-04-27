@@ -3,7 +3,465 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { BranchesListBranchesData, BranchesListBranchesResponse, BranchesCreateBranchData, BranchesCreateBranchResponse, BranchesUpdateBranchData, BranchesUpdateBranchResponse, BranchesDeleteBranchData, BranchesDeleteBranchResponse, BranchesListGstStatesResponse, BranchesListBranchStatesData, BranchesListBranchStatesResponse, BranchesAttachBranchStateData, BranchesAttachBranchStateResponse, BranchesDetachBranchStateData, BranchesDetachBranchStateResponse, CompaniesListCompaniesData, CompaniesListCompaniesResponse, CompaniesCreateCompanyData, CompaniesCreateCompanyResponse, CompaniesUpdateCompanyData, CompaniesUpdateCompanyResponse, CompaniesDeleteCompanyData, CompaniesDeleteCompanyResponse, CompaniesListCompanyDomainsData, CompaniesListCompanyDomainsResponse, CompaniesCreateCompanyDomainData, CompaniesCreateCompanyDomainResponse, CompaniesUpdateCompanyDomainData, CompaniesUpdateCompanyDomainResponse, CompaniesDeleteCompanyDomainData, CompaniesDeleteCompanyDomainResponse, DocumentsUploadPrivateDocumentData, DocumentsUploadPrivateDocumentResponse, DocumentsListDocumentsData, DocumentsListDocumentsResponse, DocumentsGetDocumentData, DocumentsGetDocumentResponse, DocumentsDeleteDocumentData, DocumentsDeleteDocumentResponse, DocumentsGetDocumentAccessLinkData, DocumentsGetDocumentAccessLinkResponse, DocumentsDownloadDocumentData, DocumentsDownloadDocumentResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MailAccessGetCentralMailboxResponse, MailAccessUpsertCentralMailboxData, MailAccessUpsertCentralMailboxResponse, MailAccessUpdateCentralMailboxData, MailAccessUpdateCentralMailboxResponse, MailAccessListUserMailAccessesData, MailAccessListUserMailAccessesResponse, MailAccessGrantUserMailAccessData, MailAccessGrantUserMailAccessResponse, MailAccessUpdateUserMailAccessData, MailAccessUpdateUserMailAccessResponse, MailAccessRevokeUserMailAccessData, MailAccessRevokeUserMailAccessResponse, PrivateCreateUserData, PrivateCreateUserResponse, RateContractsListRateContractsData, RateContractsListRateContractsResponse, RateContractsCreateRateContractData, RateContractsCreateRateContractResponse, RateContractsUpdateRateContractData, RateContractsUpdateRateContractResponse, RateContractsDeleteRateContractData, RateContractsDeleteRateContractResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, ValidationsListValidationRulesData, ValidationsListValidationRulesResponse, ValidationsCreateValidationRuleData, ValidationsCreateValidationRuleResponse, ValidationsUpdateValidationRuleData, ValidationsUpdateValidationRuleResponse, ValidationsDeleteValidationRuleData, ValidationsDeleteValidationRuleResponse, ValidationsListAssignmentsData, ValidationsListAssignmentsResponse, ValidationsCreateAssignmentData, ValidationsCreateAssignmentResponse, ValidationsUpdateAssignmentData, ValidationsUpdateAssignmentResponse, ValidationsDeleteAssignmentData, ValidationsDeleteAssignmentResponse } from './types.gen';
+
+export class BranchesService {
+    /**
+     * List Branches
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns BranchesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listBranches(data: BranchesListBranchesData = {}): CancelablePromise<BranchesListBranchesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/branches/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Branch
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns BranchPublic Successful Response
+     * @throws ApiError
+     */
+    public static createBranch(data: BranchesCreateBranchData): CancelablePromise<BranchesCreateBranchResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/branches/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Branch
+     * @param data The data for the request.
+     * @param data.branchId
+     * @param data.requestBody
+     * @returns BranchPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateBranch(data: BranchesUpdateBranchData): CancelablePromise<BranchesUpdateBranchResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/branches/{branch_id}',
+            path: {
+                branch_id: data.branchId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Branch
+     * @param data The data for the request.
+     * @param data.branchId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteBranch(data: BranchesDeleteBranchData): CancelablePromise<BranchesDeleteBranchResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/branches/{branch_id}',
+            path: {
+                branch_id: data.branchId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Gst States
+     * @returns GstStateCodesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listGstStates(): CancelablePromise<BranchesListGstStatesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/branches/gst-states'
+        });
+    }
+    
+    /**
+     * List Branch States
+     * @param data The data for the request.
+     * @param data.branchId
+     * @returns BranchGstStatesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listBranchStates(data: BranchesListBranchStatesData): CancelablePromise<BranchesListBranchStatesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/branches/{branch_id}/gst-states',
+            path: {
+                branch_id: data.branchId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Attach Branch State
+     * @param data The data for the request.
+     * @param data.branchId
+     * @param data.requestBody
+     * @returns BranchGstStatePublic Successful Response
+     * @throws ApiError
+     */
+    public static attachBranchState(data: BranchesAttachBranchStateData): CancelablePromise<BranchesAttachBranchStateResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/branches/{branch_id}/gst-states',
+            path: {
+                branch_id: data.branchId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Detach Branch State
+     * @param data The data for the request.
+     * @param data.branchId
+     * @param data.mappingId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static detachBranchState(data: BranchesDetachBranchStateData): CancelablePromise<BranchesDetachBranchStateResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/branches/{branch_id}/gst-states/{mapping_id}',
+            path: {
+                branch_id: data.branchId,
+                mapping_id: data.mappingId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class CompaniesService {
+    /**
+     * List Companies
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns CompaniesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listCompanies(data: CompaniesListCompaniesData = {}): CancelablePromise<CompaniesListCompaniesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/companies/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Company
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns CompanyPublic Successful Response
+     * @throws ApiError
+     */
+    public static createCompany(data: CompaniesCreateCompanyData): CancelablePromise<CompaniesCreateCompanyResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/companies/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Company
+     * @param data The data for the request.
+     * @param data.companyId
+     * @param data.requestBody
+     * @returns CompanyPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateCompany(data: CompaniesUpdateCompanyData): CancelablePromise<CompaniesUpdateCompanyResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/companies/{company_id}',
+            path: {
+                company_id: data.companyId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Company
+     * @param data The data for the request.
+     * @param data.companyId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteCompany(data: CompaniesDeleteCompanyData): CancelablePromise<CompaniesDeleteCompanyResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/companies/{company_id}',
+            path: {
+                company_id: data.companyId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Company Domains
+     * @param data The data for the request.
+     * @param data.companyId
+     * @returns CompanyEmailDomainsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listCompanyDomains(data: CompaniesListCompanyDomainsData): CancelablePromise<CompaniesListCompanyDomainsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/companies/{company_id}/domains',
+            path: {
+                company_id: data.companyId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Company Domain
+     * @param data The data for the request.
+     * @param data.companyId
+     * @param data.requestBody
+     * @returns CompanyEmailDomainPublic Successful Response
+     * @throws ApiError
+     */
+    public static createCompanyDomain(data: CompaniesCreateCompanyDomainData): CancelablePromise<CompaniesCreateCompanyDomainResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/companies/{company_id}/domains',
+            path: {
+                company_id: data.companyId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Company Domain
+     * @param data The data for the request.
+     * @param data.domainId
+     * @param data.requestBody
+     * @returns CompanyEmailDomainPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateCompanyDomain(data: CompaniesUpdateCompanyDomainData): CancelablePromise<CompaniesUpdateCompanyDomainResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/companies/domains/{domain_id}',
+            path: {
+                domain_id: data.domainId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Company Domain
+     * @param data The data for the request.
+     * @param data.domainId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteCompanyDomain(data: CompaniesDeleteCompanyDomainData): CancelablePromise<CompaniesDeleteCompanyDomainResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/companies/domains/{domain_id}',
+            path: {
+                domain_id: data.domainId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class DocumentsService {
+    /**
+     * Upload Private Document
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns DocumentPublic Successful Response
+     * @throws ApiError
+     */
+    public static uploadPrivateDocument(data: DocumentsUploadPrivateDocumentData): CancelablePromise<DocumentsUploadPrivateDocumentResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/documents/upload',
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Documents
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns DocumentsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listDocuments(data: DocumentsListDocumentsData = {}): CancelablePromise<DocumentsListDocumentsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/documents/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Document
+     * @param data The data for the request.
+     * @param data.documentId
+     * @returns DocumentPublic Successful Response
+     * @throws ApiError
+     */
+    public static getDocument(data: DocumentsGetDocumentData): CancelablePromise<DocumentsGetDocumentResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/documents/{document_id}',
+            path: {
+                document_id: data.documentId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Document
+     * @param data The data for the request.
+     * @param data.documentId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteDocument(data: DocumentsDeleteDocumentData): CancelablePromise<DocumentsDeleteDocumentResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/documents/{document_id}',
+            path: {
+                document_id: data.documentId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Document Access Link
+     * @param data The data for the request.
+     * @param data.documentId
+     * @returns DocumentAccessLink Successful Response
+     * @throws ApiError
+     */
+    public static getDocumentAccessLink(data: DocumentsGetDocumentAccessLinkData): CancelablePromise<DocumentsGetDocumentAccessLinkResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/documents/{document_id}/access-link',
+            path: {
+                document_id: data.documentId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Download Document
+     * @param data The data for the request.
+     * @param data.documentId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static downloadDocument(data: DocumentsDownloadDocumentData): CancelablePromise<DocumentsDownloadDocumentResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/documents/{document_id}/download',
+            path: {
+                document_id: data.documentId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
 
 export class LoginService {
     /**
@@ -102,6 +560,142 @@ export class LoginService {
     }
 }
 
+export class MailAccessService {
+    /**
+     * Get Central Mailbox
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getCentralMailbox(): CancelablePromise<MailAccessGetCentralMailboxResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/mail-access/central'
+        });
+    }
+    
+    /**
+     * Upsert Central Mailbox
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns MailboxConfigPublic Successful Response
+     * @throws ApiError
+     */
+    public static upsertCentralMailbox(data: MailAccessUpsertCentralMailboxData): CancelablePromise<MailAccessUpsertCentralMailboxResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/mail-access/central',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Central Mailbox
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns MailboxConfigPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateCentralMailbox(data: MailAccessUpdateCentralMailboxData): CancelablePromise<MailAccessUpdateCentralMailboxResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/mail-access/central',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List User Mail Accesses
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns UserMailAccessesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listUserMailAccesses(data: MailAccessListUserMailAccessesData = {}): CancelablePromise<MailAccessListUserMailAccessesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/mail-access/users',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Grant User Mail Access
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns UserMailAccessPublic Successful Response
+     * @throws ApiError
+     */
+    public static grantUserMailAccess(data: MailAccessGrantUserMailAccessData): CancelablePromise<MailAccessGrantUserMailAccessResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/mail-access/users',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update User Mail Access
+     * @param data The data for the request.
+     * @param data.userId
+     * @param data.requestBody
+     * @returns UserMailAccessPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateUserMailAccess(data: MailAccessUpdateUserMailAccessData): CancelablePromise<MailAccessUpdateUserMailAccessResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/mail-access/users/{user_id}',
+            path: {
+                user_id: data.userId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Revoke User Mail Access
+     * @param data The data for the request.
+     * @param data.userId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static revokeUserMailAccess(data: MailAccessRevokeUserMailAccessData): CancelablePromise<MailAccessRevokeUserMailAccessResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/mail-access/users/{user_id}',
+            path: {
+                user_id: data.userId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
 export class PrivateService {
     /**
      * Create User
@@ -117,6 +711,94 @@ export class PrivateService {
             url: '/api/v1/private/users/',
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class RateContractsService {
+    /**
+     * List Rate Contracts
+     * @param data The data for the request.
+     * @param data.companyId
+     * @param data.skip
+     * @param data.limit
+     * @returns ClientRateContractsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listRateContracts(data: RateContractsListRateContractsData = {}): CancelablePromise<RateContractsListRateContractsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/rate-contracts/',
+            query: {
+                company_id: data.companyId,
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Rate Contract
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ClientRateContractPublic Successful Response
+     * @throws ApiError
+     */
+    public static createRateContract(data: RateContractsCreateRateContractData): CancelablePromise<RateContractsCreateRateContractResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/rate-contracts/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Rate Contract
+     * @param data The data for the request.
+     * @param data.contractId
+     * @param data.requestBody
+     * @returns ClientRateContractPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateRateContract(data: RateContractsUpdateRateContractData): CancelablePromise<RateContractsUpdateRateContractResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/rate-contracts/{contract_id}',
+            path: {
+                contract_id: data.contractId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Rate Contract
+     * @param data The data for the request.
+     * @param data.contractId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteRateContract(data: RateContractsDeleteRateContractData): CancelablePromise<RateContractsDeleteRateContractResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/rate-contracts/{contract_id}',
+            path: {
+                contract_id: data.contractId
+            },
             errors: {
                 422: 'Validation Error'
             }
@@ -352,6 +1034,174 @@ export class UtilsService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/utils/health-check/'
+        });
+    }
+}
+
+export class ValidationsService {
+    /**
+     * List Validation Rules
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns ValidationRulesPublic Successful Response
+     * @throws ApiError
+     */
+    public static listValidationRules(data: ValidationsListValidationRulesData = {}): CancelablePromise<ValidationsListValidationRulesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/validations/rules',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Validation Rule
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ValidationRulePublic Successful Response
+     * @throws ApiError
+     */
+    public static createValidationRule(data: ValidationsCreateValidationRuleData): CancelablePromise<ValidationsCreateValidationRuleResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/validations/rules',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Validation Rule
+     * @param data The data for the request.
+     * @param data.ruleId
+     * @param data.requestBody
+     * @returns ValidationRulePublic Successful Response
+     * @throws ApiError
+     */
+    public static updateValidationRule(data: ValidationsUpdateValidationRuleData): CancelablePromise<ValidationsUpdateValidationRuleResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/validations/rules/{rule_id}',
+            path: {
+                rule_id: data.ruleId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Validation Rule
+     * @param data The data for the request.
+     * @param data.ruleId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteValidationRule(data: ValidationsDeleteValidationRuleData): CancelablePromise<ValidationsDeleteValidationRuleResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/validations/rules/{rule_id}',
+            path: {
+                rule_id: data.ruleId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Assignments
+     * @param data The data for the request.
+     * @param data.companyId
+     * @returns CompanyValidationAssignmentsPublic Successful Response
+     * @throws ApiError
+     */
+    public static listAssignments(data: ValidationsListAssignmentsData = {}): CancelablePromise<ValidationsListAssignmentsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/validations/assignments',
+            query: {
+                company_id: data.companyId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Assignment
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns CompanyValidationAssignmentPublic Successful Response
+     * @throws ApiError
+     */
+    public static createAssignment(data: ValidationsCreateAssignmentData): CancelablePromise<ValidationsCreateAssignmentResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/validations/assignments',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Assignment
+     * @param data The data for the request.
+     * @param data.assignmentId
+     * @param data.requestBody
+     * @returns CompanyValidationAssignmentPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateAssignment(data: ValidationsUpdateAssignmentData): CancelablePromise<ValidationsUpdateAssignmentResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/validations/assignments/{assignment_id}',
+            path: {
+                assignment_id: data.assignmentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Assignment
+     * @param data The data for the request.
+     * @param data.assignmentId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteAssignment(data: ValidationsDeleteAssignmentData): CancelablePromise<ValidationsDeleteAssignmentResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/validations/assignments/{assignment_id}',
+            path: {
+                assignment_id: data.assignmentId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
 }

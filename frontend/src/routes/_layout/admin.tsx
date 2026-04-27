@@ -1,11 +1,12 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
-import { Suspense } from "react"
+import { Suspense, useMemo, useState } from "react"
 
 import { type UserPublic, UsersService } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
 import { columns, type UserTableData } from "@/components/Admin/columns"
 import { DataTable } from "@/components/Common/DataTable"
+import { Input } from "@/components/ui/input"
 import PendingUsers from "@/components/Pending/PendingUsers"
 import useAuth from "@/hooks/useAuth"
 
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/_layout/admin")({
   }),
 })
 
-function UsersTableContent() {
+function UsersTableContent({ search }: { search: string }) {
   const { user: currentUser } = useAuth()
   const { data: users } = useSuspenseQuery(getUsersQueryOptions())
 
@@ -43,19 +44,32 @@ function UsersTableContent() {
     ...user,
     isCurrentUser: currentUser?.id === user.id,
   }))
+  const filteredData = useMemo(() => {
+    if (!search.trim()) {
+      return tableData
+    }
+    const q = search.toLowerCase()
+    return tableData.filter(
+      (user) =>
+        user.email.toLowerCase().includes(q) ||
+        (user.full_name ?? "").toLowerCase().includes(q),
+    )
+  }, [tableData, search])
 
-  return <DataTable columns={columns} data={tableData} />
+  return <DataTable columns={columns} data={filteredData} />
 }
 
-function UsersTable() {
+function UsersTable({ search }: { search: string }) {
   return (
     <Suspense fallback={<PendingUsers />}>
-      <UsersTableContent />
+      <UsersTableContent search={search} />
     </Suspense>
   )
 }
 
 function Admin() {
+  const [search, setSearch] = useState("")
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -69,7 +83,13 @@ function Admin() {
           <AddUser />
         </div>
       </div>
-      <UsersTable />
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search users by email or name"
+        className="max-w-sm"
+      />
+      <UsersTable search={search} />
     </div>
   )
 }

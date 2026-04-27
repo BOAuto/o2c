@@ -44,6 +44,8 @@ const formSchema = z
       .min(1, { message: "Please confirm your password" }),
     is_superuser: z.boolean(),
     is_active: z.boolean(),
+    mail_access_type: z.enum(["OrderUser", "OrderInternalUser"]).optional(),
+    mail_app_password: z.string().optional(),
   })
   .refine((data) => data.password === data.confirm_password, {
     message: "The passwords don't match",
@@ -68,6 +70,8 @@ const AddUser = () => {
       confirm_password: "",
       is_superuser: false,
       is_active: false,
+      mail_access_type: undefined,
+      mail_app_password: "",
     },
   })
 
@@ -213,6 +217,48 @@ const AddUser = () => {
                       />
                     </FormControl>
                     <FormLabel className="font-normal">Is active?</FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="mail_access_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mail Access Type</FormLabel>
+                    <FormControl>
+                      <select
+                        className="h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm"
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.value === "" ? undefined : e.target.value)
+                        }
+                      >
+                        <option value="">No mail access</option>
+                        <option value="OrderUser">OrderUser (IMAP + SMTP)</option>
+                        <option value="OrderInternalUser">OrderInternalUser (IMAP only)</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="mail_app_password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mail App Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Required when mail access is enabled"
+                        type="password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

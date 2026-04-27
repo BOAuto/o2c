@@ -23,6 +23,7 @@ from app.models import (
     UserUpdate,
     UserUpdateMe,
 )
+from app.services.mail_access import upsert_user_mail_access
 from app.utils import generate_new_account_email, send_email
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -65,6 +66,13 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
         )
 
     user = crud.create_user(session=session, user_create=user_in)
+    upsert_user_mail_access(
+        session=session,
+        user_id=user.id,
+        email=user.email,
+        access_type=user_in.mail_access_type,
+        app_password=user_in.mail_app_password,
+    )
     if settings.emails_enabled and user_in.email:
         email_data = generate_new_account_email(
             email_to=user_in.email, username=user_in.email, password=user_in.password
@@ -207,6 +215,13 @@ def update_user(
             )
 
     db_user = crud.update_user(session=session, db_user=db_user, user_in=user_in)
+    upsert_user_mail_access(
+        session=session,
+        user_id=db_user.id,
+        email=db_user.email,
+        access_type=user_in.mail_access_type,
+        app_password=user_in.mail_app_password,
+    )
     return db_user
 
 

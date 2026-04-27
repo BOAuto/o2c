@@ -11,11 +11,24 @@ logger = logging.getLogger(__name__)
 
 async def run_worker() -> None:
     client = await connect_temporal_client()
+    workflows: list[object] = []
+    activities: list[object] = []
+    if not workflows and not activities:
+        logger.warning(
+            "Temporal worker started with no registered workflows or activities; idling until implementations are added",
+            extra={
+                "namespace": settings.TEMPORAL_NAMESPACE,
+                "task_queue": settings.TEMPORAL_TASK_QUEUE,
+            },
+        )
+        await asyncio.Event().wait()
+        return
+
     worker = Worker(
         client,
         task_queue=settings.TEMPORAL_TASK_QUEUE,
-        workflows=[],
-        activities=[],
+        workflows=workflows,
+        activities=activities,
     )
     logger.info(
         "Temporal worker started (no workflows registered yet)",

@@ -16,7 +16,15 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutMailAccessRouteImport } from './routes/_layout/mail-access'
+import { Route as LayoutCompanyValidationsRouteImport } from './routes/_layout/company-validations'
+import { Route as LayoutCompaniesRouteImport } from './routes/_layout/companies'
+import { Route as LayoutClientsRouteImport } from './routes/_layout/clients'
+import { Route as LayoutBranchesRouteImport } from './routes/_layout/branches'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
+import { Route as LayoutCompaniesCompanyIdRouteImport } from './routes/_layout/companies.$companyId'
+import { Route as LayoutBranchesCreateBranchRouteImport } from './routes/_layout/branches.createBranch'
+import { Route as LayoutBranchesBranchIdRouteImport } from './routes/_layout/branches.$branchId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -52,10 +60,53 @@ const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutMailAccessRoute = LayoutMailAccessRouteImport.update({
+  id: '/mail-access',
+  path: '/mail-access',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCompanyValidationsRoute =
+  LayoutCompanyValidationsRouteImport.update({
+    id: '/company-validations',
+    path: '/company-validations',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutCompaniesRoute = LayoutCompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutClientsRoute = LayoutClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutBranchesRoute = LayoutBranchesRouteImport.update({
+  id: '/branches',
+  path: '/branches',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCompaniesCompanyIdRoute =
+  LayoutCompaniesCompanyIdRouteImport.update({
+    id: '/$companyId',
+    path: '/$companyId',
+    getParentRoute: () => LayoutCompaniesRoute,
+  } as any)
+const LayoutBranchesCreateBranchRoute =
+  LayoutBranchesCreateBranchRouteImport.update({
+    id: '/createBranch',
+    path: '/createBranch',
+    getParentRoute: () => LayoutBranchesRoute,
+  } as any)
+const LayoutBranchesBranchIdRoute = LayoutBranchesBranchIdRouteImport.update({
+  id: '/$branchId',
+  path: '/$branchId',
+  getParentRoute: () => LayoutBranchesRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -65,7 +116,15 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/branches': typeof LayoutBranchesRouteWithChildren
+  '/clients': typeof LayoutClientsRoute
+  '/companies': typeof LayoutCompaniesRouteWithChildren
+  '/company-validations': typeof LayoutCompanyValidationsRoute
+  '/mail-access': typeof LayoutMailAccessRoute
   '/settings': typeof LayoutSettingsRoute
+  '/branches/$branchId': typeof LayoutBranchesBranchIdRoute
+  '/branches/createBranch': typeof LayoutBranchesCreateBranchRoute
+  '/companies/$companyId': typeof LayoutCompaniesCompanyIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -73,8 +132,16 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/branches': typeof LayoutBranchesRouteWithChildren
+  '/clients': typeof LayoutClientsRoute
+  '/companies': typeof LayoutCompaniesRouteWithChildren
+  '/company-validations': typeof LayoutCompanyValidationsRoute
+  '/mail-access': typeof LayoutMailAccessRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
+  '/branches/$branchId': typeof LayoutBranchesBranchIdRoute
+  '/branches/createBranch': typeof LayoutBranchesCreateBranchRoute
+  '/companies/$companyId': typeof LayoutCompaniesCompanyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -84,8 +151,16 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/branches': typeof LayoutBranchesRouteWithChildren
+  '/_layout/clients': typeof LayoutClientsRoute
+  '/_layout/companies': typeof LayoutCompaniesRouteWithChildren
+  '/_layout/company-validations': typeof LayoutCompanyValidationsRoute
+  '/_layout/mail-access': typeof LayoutMailAccessRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/branches/$branchId': typeof LayoutBranchesBranchIdRoute
+  '/_layout/branches/createBranch': typeof LayoutBranchesCreateBranchRoute
+  '/_layout/companies/$companyId': typeof LayoutCompaniesCompanyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,7 +171,15 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/branches'
+    | '/clients'
+    | '/companies'
+    | '/company-validations'
+    | '/mail-access'
     | '/settings'
+    | '/branches/$branchId'
+    | '/branches/createBranch'
+    | '/companies/$companyId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -104,8 +187,16 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/branches'
+    | '/clients'
+    | '/companies'
+    | '/company-validations'
+    | '/mail-access'
     | '/settings'
     | '/'
+    | '/branches/$branchId'
+    | '/branches/createBranch'
+    | '/companies/$companyId'
   id:
     | '__root__'
     | '/_layout'
@@ -114,8 +205,16 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/branches'
+    | '/_layout/clients'
+    | '/_layout/companies'
+    | '/_layout/company-validations'
+    | '/_layout/mail-access'
     | '/_layout/settings'
     | '/_layout/'
+    | '/_layout/branches/$branchId'
+    | '/_layout/branches/createBranch'
+    | '/_layout/companies/$companyId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,6 +276,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/mail-access': {
+      id: '/_layout/mail-access'
+      path: '/mail-access'
+      fullPath: '/mail-access'
+      preLoaderRoute: typeof LayoutMailAccessRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/company-validations': {
+      id: '/_layout/company-validations'
+      path: '/company-validations'
+      fullPath: '/company-validations'
+      preLoaderRoute: typeof LayoutCompanyValidationsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/companies': {
+      id: '/_layout/companies'
+      path: '/companies'
+      fullPath: '/companies'
+      preLoaderRoute: typeof LayoutCompaniesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/clients': {
+      id: '/_layout/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof LayoutClientsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/branches': {
+      id: '/_layout/branches'
+      path: '/branches'
+      fullPath: '/branches'
+      preLoaderRoute: typeof LayoutBranchesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/admin': {
       id: '/_layout/admin'
       path: '/admin'
@@ -184,17 +318,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/companies/$companyId': {
+      id: '/_layout/companies/$companyId'
+      path: '/$companyId'
+      fullPath: '/companies/$companyId'
+      preLoaderRoute: typeof LayoutCompaniesCompanyIdRouteImport
+      parentRoute: typeof LayoutCompaniesRoute
+    }
+    '/_layout/branches/createBranch': {
+      id: '/_layout/branches/createBranch'
+      path: '/createBranch'
+      fullPath: '/branches/createBranch'
+      preLoaderRoute: typeof LayoutBranchesCreateBranchRouteImport
+      parentRoute: typeof LayoutBranchesRoute
+    }
+    '/_layout/branches/$branchId': {
+      id: '/_layout/branches/$branchId'
+      path: '/$branchId'
+      fullPath: '/branches/$branchId'
+      preLoaderRoute: typeof LayoutBranchesBranchIdRouteImport
+      parentRoute: typeof LayoutBranchesRoute
+    }
   }
 }
 
+interface LayoutBranchesRouteChildren {
+  LayoutBranchesBranchIdRoute: typeof LayoutBranchesBranchIdRoute
+  LayoutBranchesCreateBranchRoute: typeof LayoutBranchesCreateBranchRoute
+}
+
+const LayoutBranchesRouteChildren: LayoutBranchesRouteChildren = {
+  LayoutBranchesBranchIdRoute: LayoutBranchesBranchIdRoute,
+  LayoutBranchesCreateBranchRoute: LayoutBranchesCreateBranchRoute,
+}
+
+const LayoutBranchesRouteWithChildren = LayoutBranchesRoute._addFileChildren(
+  LayoutBranchesRouteChildren,
+)
+
+interface LayoutCompaniesRouteChildren {
+  LayoutCompaniesCompanyIdRoute: typeof LayoutCompaniesCompanyIdRoute
+}
+
+const LayoutCompaniesRouteChildren: LayoutCompaniesRouteChildren = {
+  LayoutCompaniesCompanyIdRoute: LayoutCompaniesCompanyIdRoute,
+}
+
+const LayoutCompaniesRouteWithChildren = LayoutCompaniesRoute._addFileChildren(
+  LayoutCompaniesRouteChildren,
+)
+
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutBranchesRoute: typeof LayoutBranchesRouteWithChildren
+  LayoutClientsRoute: typeof LayoutClientsRoute
+  LayoutCompaniesRoute: typeof LayoutCompaniesRouteWithChildren
+  LayoutCompanyValidationsRoute: typeof LayoutCompanyValidationsRoute
+  LayoutMailAccessRoute: typeof LayoutMailAccessRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutBranchesRoute: LayoutBranchesRouteWithChildren,
+  LayoutClientsRoute: LayoutClientsRoute,
+  LayoutCompaniesRoute: LayoutCompaniesRouteWithChildren,
+  LayoutCompanyValidationsRoute: LayoutCompanyValidationsRoute,
+  LayoutMailAccessRoute: LayoutMailAccessRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }
