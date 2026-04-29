@@ -1,4 +1,4 @@
-import { Building2, Home, Mail, Users, Workflow } from "lucide-react"
+import { Building2, Home, Mail, SearchCode, Users, Workflow, XCircle } from "lucide-react"
 
 import { Logo } from "@/components/Common/Logo"
 import {
@@ -27,6 +27,9 @@ export function AppSidebar() {
         ...baseItems,
         { icon: Users, title: "Admin", path: "/admin" },
         { icon: Mail, title: "Mail Access", path: "/mail-access" },
+        { icon: Mail, title: "Mailbox", path: "/mailbox" },
+        { icon: SearchCode, title: "Message ID Explorer", path: "/mailbox-message-ids" },
+        { icon: XCircle, title: "Mailbox Not Processed", path: "/mailbox-not-processed" },
         { icon: Building2, title: "Companies", path: "/companies" },
         { icon: Building2, title: "Company Validations", path: "/company-validations" },
         { icon: Workflow, title: "Branches", path: "/branches" },

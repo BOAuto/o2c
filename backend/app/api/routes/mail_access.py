@@ -3,9 +3,10 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import func, select
+from sqlmodel import col, func, select
 
 from app.api.deps import SessionDep, get_current_active_superuser
+from app.core.config import settings
 from app.core.crypto import encrypt_secret
 from app.models import (
     MailboxConfig,
@@ -15,12 +16,14 @@ from app.models import (
     MailboxScopeType,
     Message,
     User,
-    UserMailAccess,
     UserMailAccessCreate,
     UserMailAccessesPublic,
     UserMailAccessPublic,
     UserMailAccessUpdate,
+    user_mail_access_public_from_mailbox,
 )
+from app.services.o2c_scheduler import ensure_and_sync_o2c_scheduler
+from app.services.retrieval_period import parse_ingestion_period_minutes
 
 router = APIRouter(
     prefix="/mail-access",
@@ -31,6 +34,14 @@ router = APIRouter(
 
 def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _user_linked_mail_filters():
+    return (
+        MailboxConfig.scope_type == MailboxScopeType.USER_LINKED,
+        col(MailboxConfig.user_id).isnot(None),
+        col(MailboxConfig.mail_access_type).isnot(None),
+    )
 
 
 @router.get("/central", response_model=MailboxConfigPublic | None)
@@ -44,7 +55,7 @@ def get_central_mailbox(session: SessionDep) -> MailboxConfigPublic | None:
 
 
 @router.put("/central", response_model=MailboxConfigPublic)
-def upsert_central_mailbox(
+async def upsert_central_mailbox(
     *, session: SessionDep, body: MailboxConfigCreate
 ) -> MailboxConfigPublic:
     mailbox = session.exec(
@@ -61,6 +72,11 @@ def upsert_central_mailbox(
         session.add(mailbox)
         session.commit()
         session.refresh(mailbox)
+        minutes = parse_ingestion_period_minutes(
+            mailbox.ingestion_retrieval_period,
+            default=settings.O2C_DEFAULT_INGESTION_PERIOD_MINUTES,
+        )
+        await ensure_and_sync_o2c_scheduler(minutes)
         return MailboxConfigPublic.model_validate(mailbox)
 
     mailbox = MailboxConfig(
@@ -72,11 +88,16 @@ def upsert_central_mailbox(
     session.add(mailbox)
     session.commit()
     session.refresh(mailbox)
+    minutes = parse_ingestion_period_minutes(
+        mailbox.ingestion_retrieval_period,
+        default=settings.O2C_DEFAULT_INGESTION_PERIOD_MINUTES,
+    )
+    await ensure_and_sync_o2c_scheduler(minutes)
     return MailboxConfigPublic.model_validate(mailbox)
 
 
 @router.patch("/central", response_model=MailboxConfigPublic)
-def update_central_mailbox(
+async def update_central_mailbox(
     *, session: SessionDep, body: MailboxConfigUpdate
 ) -> MailboxConfigPublic:
     mailbox = session.exec(
@@ -96,6 +117,11 @@ def update_central_mailbox(
     session.add(mailbox)
     session.commit()
     session.refresh(mailbox)
+    minutes = parse_ingestion_period_minutes(
+        mailbox.ingestion_retrieval_period,
+        default=settings.O2C_DEFAULT_INGESTION_PERIOD_MINUTES,
+    )
+    await ensure_and_sync_o2c_scheduler(minutes)
     return MailboxConfigPublic.model_validate(mailbox)
 
 
@@ -103,10 +129,15 @@ def update_central_mailbox(
 def list_user_mail_accesses(
     session: SessionDep, skip: int = 0, limit: int = 100
 ) -> UserMailAccessesPublic:
-    count = session.exec(select(func.count()).select_from(UserMailAccess)).one()
-    rows = session.exec(select(UserMailAccess).offset(skip).limit(limit)).all()
+    uf = _user_linked_mail_filters()
+    count = session.exec(
+        select(func.count()).select_from(MailboxConfig).where(*uf)
+    ).one()
+    rows = session.exec(
+        select(MailboxConfig).where(*uf).offset(skip).limit(limit)
+    ).all()
     return UserMailAccessesPublic(
-        data=[UserMailAccessPublic.model_validate(row) for row in rows],
+        data=[user_mail_access_public_from_mailbox(row) for row in rows],
         count=count,
     )
 
@@ -125,77 +156,80 @@ def grant_user_mail_access(
             MailboxConfig.email == user.email,
         )
     ).first()
+    prev = session.exec(
+        select(MailboxConfig).where(
+            MailboxConfig.user_id == body.user_id,
+            MailboxConfig.scope_type == MailboxScopeType.USER_LINKED,
+        )
+    ).first()
     if mailbox:
+        if prev and prev.id != mailbox.id:
+            prev.user_id = None
+            prev.mail_access_type = None
+            session.add(prev)
         mailbox.encrypted_app_password = encrypt_secret(body.app_password)
+        mailbox.user_id = body.user_id
+        mailbox.mail_access_type = body.access_type
         mailbox.updated_at = _now_utc()
         mailbox.is_active = True
     else:
+        if prev:
+            prev.user_id = None
+            prev.mail_access_type = None
+            session.add(prev)
         mailbox = MailboxConfig(
             scope_type=MailboxScopeType.USER_LINKED,
             email=user.email,
+            user_id=body.user_id,
+            mail_access_type=body.access_type,
             encrypted_app_password=encrypt_secret(body.app_password),
         )
     session.add(mailbox)
     session.commit()
     session.refresh(mailbox)
-
-    access = session.exec(
-        select(UserMailAccess).where(UserMailAccess.user_id == body.user_id)
-    ).first()
-    if access:
-        access.mailbox_config_id = mailbox.id
-        access.access_type = body.access_type
-        access.is_active = True
-        access.updated_at = _now_utc()
-    else:
-        access = UserMailAccess(
-            user_id=body.user_id,
-            mailbox_config_id=mailbox.id,
-            access_type=body.access_type,
-            is_active=True,
-        )
-    session.add(access)
-    session.commit()
-    session.refresh(access)
-    return UserMailAccessPublic.model_validate(access)
+    return user_mail_access_public_from_mailbox(mailbox)
 
 
 @router.patch("/users/{user_id}", response_model=UserMailAccessPublic)
 def update_user_mail_access(
     *, session: SessionDep, user_id: uuid.UUID, body: UserMailAccessUpdate
 ) -> UserMailAccessPublic:
-    access = session.exec(
-        select(UserMailAccess).where(UserMailAccess.user_id == user_id)
+    mailbox = session.exec(
+        select(MailboxConfig).where(
+            MailboxConfig.user_id == user_id,
+            MailboxConfig.scope_type == MailboxScopeType.USER_LINKED,
+        )
     ).first()
-    if not access:
+    if not mailbox or mailbox.mail_access_type is None:
         raise HTTPException(status_code=404, detail="User mail access not found")
     data = body.model_dump(exclude_unset=True)
     if "app_password" in data:
-        mailbox = session.get(MailboxConfig, access.mailbox_config_id)
-        if not mailbox:
-            raise HTTPException(status_code=404, detail="Mailbox config not found")
         mailbox.encrypted_app_password = encrypt_secret(data.pop("app_password"))
         mailbox.updated_at = _now_utc()
-        session.add(mailbox)
-        session.commit()
     for key, value in data.items():
-        setattr(access, key, value)
-    access.updated_at = _now_utc()
-    session.add(access)
+        if key == "access_type":
+            mailbox.mail_access_type = value
+        else:
+            setattr(mailbox, key, value)
+    mailbox.updated_at = _now_utc()
+    session.add(mailbox)
     session.commit()
-    session.refresh(access)
-    return UserMailAccessPublic.model_validate(access)
+    session.refresh(mailbox)
+    return user_mail_access_public_from_mailbox(mailbox)
 
 
 @router.delete("/users/{user_id}", response_model=Message)
 def revoke_user_mail_access(*, session: SessionDep, user_id: uuid.UUID) -> Any:
-    access = session.exec(
-        select(UserMailAccess).where(UserMailAccess.user_id == user_id)
+    mailbox = session.exec(
+        select(MailboxConfig).where(
+            MailboxConfig.user_id == user_id,
+            MailboxConfig.scope_type == MailboxScopeType.USER_LINKED,
+        )
     ).first()
-    if not access:
+    if not mailbox:
         raise HTTPException(status_code=404, detail="User mail access not found")
-    access.is_active = False
-    access.updated_at = _now_utc()
-    session.add(access)
+    mailbox.is_active = False
+    mailbox.updated_at = _now_utc()
+    session.add(mailbox)
     session.commit()
     return Message(message="User mail access revoked")

@@ -46,8 +46,13 @@ class MailboxConfigUpdate(SQLModel):
 
 
 class MailboxConfig(MailboxConfigBase, table=True):
-    __table_args__ = (UniqueConstraint("scope_type", "email", name="uq_mailbox_scope_email"),)
+    __table_args__ = (
+        UniqueConstraint("scope_type", "email", name="uq_mailbox_scope_email"),
+        UniqueConstraint("user_id", name="uq_mailboxconfig_user_id"),
+    )
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    mail_access_type: MailAccessType | None = Field(default=None, max_length=255)
+    user_id: uuid.UUID | None = Field(default=None, foreign_key="user.id", index=True)
     encrypted_app_password: str = Field(max_length=1024)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
@@ -61,6 +66,8 @@ class MailboxConfig(MailboxConfigBase, table=True):
 
 class MailboxConfigPublic(MailboxConfigBase):
     id: uuid.UUID
+    mail_access_type: MailAccessType | None = None
+    user_id: uuid.UUID | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -84,23 +91,24 @@ class UserMailAccessUpdate(SQLModel):
     is_active: bool | None = None
 
 
-class UserMailAccess(UserMailAccessBase, table=True):
-    __table_args__ = (UniqueConstraint("user_id", name="uq_user_mail_access_user"),)
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    created_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-    )
-    updated_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-    )
-
-
 class UserMailAccessPublic(UserMailAccessBase):
     id: uuid.UUID
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
+
+def user_mail_access_public_from_mailbox(m: MailboxConfig) -> UserMailAccessPublic:
+    if m.user_id is None or m.mail_access_type is None:
+        raise ValueError("mailbox is not a user-linked mail access row")
+    return UserMailAccessPublic(
+        id=m.id,
+        user_id=m.user_id,
+        mailbox_config_id=m.id,
+        access_type=m.mail_access_type,
+        is_active=m.is_active,
+        created_at=m.created_at,
+        updated_at=m.updated_at,
+    )
 
 
 class MailboxConfigsPublic(SQLModel):

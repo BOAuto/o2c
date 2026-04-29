@@ -16,6 +16,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutRejectedCentralRouteImport } from './routes/_layout/rejected-central'
+import { Route as LayoutMailboxNotProcessedRouteImport } from './routes/_layout/mailbox-not-processed'
+import { Route as LayoutMailboxMessageIdsRouteImport } from './routes/_layout/mailbox-message-ids'
+import { Route as LayoutMailboxRouteImport } from './routes/_layout/mailbox'
 import { Route as LayoutMailAccessRouteImport } from './routes/_layout/mail-access'
 import { Route as LayoutCompanyValidationsRouteImport } from './routes/_layout/company-validations'
 import { Route as LayoutCompaniesRouteImport } from './routes/_layout/companies'
@@ -58,6 +62,27 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutRejectedCentralRoute = LayoutRejectedCentralRouteImport.update({
+  id: '/rejected-central',
+  path: '/rejected-central',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutMailboxNotProcessedRoute =
+  LayoutMailboxNotProcessedRouteImport.update({
+    id: '/mailbox-not-processed',
+    path: '/mailbox-not-processed',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutMailboxMessageIdsRoute = LayoutMailboxMessageIdsRouteImport.update({
+  id: '/mailbox-message-ids',
+  path: '/mailbox-message-ids',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutMailboxRoute = LayoutMailboxRouteImport.update({
+  id: '/mailbox',
+  path: '/mailbox',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutMailAccessRoute = LayoutMailAccessRouteImport.update({
@@ -121,6 +146,10 @@ export interface FileRoutesByFullPath {
   '/companies': typeof LayoutCompaniesRouteWithChildren
   '/company-validations': typeof LayoutCompanyValidationsRoute
   '/mail-access': typeof LayoutMailAccessRoute
+  '/mailbox': typeof LayoutMailboxRoute
+  '/mailbox-message-ids': typeof LayoutMailboxMessageIdsRoute
+  '/mailbox-not-processed': typeof LayoutMailboxNotProcessedRoute
+  '/rejected-central': typeof LayoutRejectedCentralRoute
   '/settings': typeof LayoutSettingsRoute
   '/branches/$branchId': typeof LayoutBranchesBranchIdRoute
   '/branches/createBranch': typeof LayoutBranchesCreateBranchRoute
@@ -137,6 +166,10 @@ export interface FileRoutesByTo {
   '/companies': typeof LayoutCompaniesRouteWithChildren
   '/company-validations': typeof LayoutCompanyValidationsRoute
   '/mail-access': typeof LayoutMailAccessRoute
+  '/mailbox': typeof LayoutMailboxRoute
+  '/mailbox-message-ids': typeof LayoutMailboxMessageIdsRoute
+  '/mailbox-not-processed': typeof LayoutMailboxNotProcessedRoute
+  '/rejected-central': typeof LayoutRejectedCentralRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
   '/branches/$branchId': typeof LayoutBranchesBranchIdRoute
@@ -156,6 +189,10 @@ export interface FileRoutesById {
   '/_layout/companies': typeof LayoutCompaniesRouteWithChildren
   '/_layout/company-validations': typeof LayoutCompanyValidationsRoute
   '/_layout/mail-access': typeof LayoutMailAccessRoute
+  '/_layout/mailbox': typeof LayoutMailboxRoute
+  '/_layout/mailbox-message-ids': typeof LayoutMailboxMessageIdsRoute
+  '/_layout/mailbox-not-processed': typeof LayoutMailboxNotProcessedRoute
+  '/_layout/rejected-central': typeof LayoutRejectedCentralRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/branches/$branchId': typeof LayoutBranchesBranchIdRoute
@@ -176,6 +213,10 @@ export interface FileRouteTypes {
     | '/companies'
     | '/company-validations'
     | '/mail-access'
+    | '/mailbox'
+    | '/mailbox-message-ids'
+    | '/mailbox-not-processed'
+    | '/rejected-central'
     | '/settings'
     | '/branches/$branchId'
     | '/branches/createBranch'
@@ -192,6 +233,10 @@ export interface FileRouteTypes {
     | '/companies'
     | '/company-validations'
     | '/mail-access'
+    | '/mailbox'
+    | '/mailbox-message-ids'
+    | '/mailbox-not-processed'
+    | '/rejected-central'
     | '/settings'
     | '/'
     | '/branches/$branchId'
@@ -210,6 +255,10 @@ export interface FileRouteTypes {
     | '/_layout/companies'
     | '/_layout/company-validations'
     | '/_layout/mail-access'
+    | '/_layout/mailbox'
+    | '/_layout/mailbox-message-ids'
+    | '/_layout/mailbox-not-processed'
+    | '/_layout/rejected-central'
     | '/_layout/settings'
     | '/_layout/'
     | '/_layout/branches/$branchId'
@@ -274,6 +323,34 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof LayoutSettingsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/rejected-central': {
+      id: '/_layout/rejected-central'
+      path: '/rejected-central'
+      fullPath: '/rejected-central'
+      preLoaderRoute: typeof LayoutRejectedCentralRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/mailbox-not-processed': {
+      id: '/_layout/mailbox-not-processed'
+      path: '/mailbox-not-processed'
+      fullPath: '/mailbox-not-processed'
+      preLoaderRoute: typeof LayoutMailboxNotProcessedRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/mailbox-message-ids': {
+      id: '/_layout/mailbox-message-ids'
+      path: '/mailbox-message-ids'
+      fullPath: '/mailbox-message-ids'
+      preLoaderRoute: typeof LayoutMailboxMessageIdsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/mailbox': {
+      id: '/_layout/mailbox'
+      path: '/mailbox'
+      fullPath: '/mailbox'
+      preLoaderRoute: typeof LayoutMailboxRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/mail-access': {
@@ -375,6 +452,10 @@ interface LayoutRouteChildren {
   LayoutCompaniesRoute: typeof LayoutCompaniesRouteWithChildren
   LayoutCompanyValidationsRoute: typeof LayoutCompanyValidationsRoute
   LayoutMailAccessRoute: typeof LayoutMailAccessRoute
+  LayoutMailboxRoute: typeof LayoutMailboxRoute
+  LayoutMailboxMessageIdsRoute: typeof LayoutMailboxMessageIdsRoute
+  LayoutMailboxNotProcessedRoute: typeof LayoutMailboxNotProcessedRoute
+  LayoutRejectedCentralRoute: typeof LayoutRejectedCentralRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
@@ -386,6 +467,10 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutCompaniesRoute: LayoutCompaniesRouteWithChildren,
   LayoutCompanyValidationsRoute: LayoutCompanyValidationsRoute,
   LayoutMailAccessRoute: LayoutMailAccessRoute,
+  LayoutMailboxRoute: LayoutMailboxRoute,
+  LayoutMailboxMessageIdsRoute: LayoutMailboxMessageIdsRoute,
+  LayoutMailboxNotProcessedRoute: LayoutMailboxNotProcessedRoute,
+  LayoutRejectedCentralRoute: LayoutRejectedCentralRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }

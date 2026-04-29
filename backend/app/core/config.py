@@ -82,9 +82,18 @@ class Settings(BaseSettings):
     TEMPORAL_ADDRESS: str = "temporal:7233"
     TEMPORAL_NAMESPACE: str = "default"
     TEMPORAL_TASK_QUEUE: str = "default"
+    #: Workflow cache size on the worker. Use ``0`` to disable sticky execution (no per-worker
+    #: sticky task queue). That avoids Temporal server errors like "sticky worker unavailable"
+    #: when the worker process restarts or is recreated (common in Docker dev). Raise in
+    #: long-lived production workers if you want stickier routing and cache (e.g. ``1000``).
+    TEMPORAL_WORKER_MAX_CACHED_WORKFLOWS: int = 0
     #: Connect to Temporal during API startup (Compose sets true). False avoids requiring
     #: Temporal for pytest and local runs that never touch workflow routes.
     TEMPORAL_EAGER_CONNECT: bool = False
+    #: Stable workflow id for the O2C central-mail polling scheduler.
+    TEMPORAL_O2C_SCHEDULER_WORKFLOW_ID: str = "o2c-ingestion-scheduler"
+    #: Default poll interval when `ingestion_retrieval_period` is unset (minutes).
+    O2C_DEFAULT_INGESTION_PERIOD_MINUTES: int = 5
     POSTGRES_SERVER: str
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str

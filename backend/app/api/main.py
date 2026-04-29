@@ -4,6 +4,7 @@ from app.api.routes import (
     branches,
     companies,
     documents,
+    ingestion,
     login,
     mail_access,
     private,
@@ -21,6 +22,7 @@ api_router.include_router(users.router)
 api_router.include_router(utils.router)
 api_router.include_router(documents.router)
 api_router.include_router(temporal.router)
+api_router.include_router(ingestion.router)
 api_router.include_router(mail_access.router)
 api_router.include_router(companies.router)
 api_router.include_router(rate_contracts.router)

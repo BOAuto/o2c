@@ -4,12 +4,7 @@ from datetime import datetime, timezone
 from sqlmodel import Session, select
 
 from app.core.crypto import encrypt_secret
-from app.models import (
-    MailAccessType,
-    MailboxConfig,
-    MailboxScopeType,
-    UserMailAccess,
-)
+from app.models import MailAccessType, MailboxConfig, MailboxScopeType
 
 
 def _now_utc() -> datetime:
@@ -24,20 +19,21 @@ def upsert_user_mail_access(
     access_type: MailAccessType | None,
     app_password: str | None,
 ) -> None:
-    existing_link = session.exec(
-        select(UserMailAccess).where(UserMailAccess.user_id == user_id)
+    existing_by_user = session.exec(
+        select(MailboxConfig).where(
+            MailboxConfig.user_id == user_id,
+            MailboxConfig.scope_type == MailboxScopeType.USER_LINKED,
+        )
     ).first()
     if access_type is None:
-        if existing_link:
-            existing_link.is_active = False
-            existing_link.updated_at = _now_utc()
-            session.add(existing_link)
+        if existing_by_user:
+            existing_by_user.is_active = False
+            existing_by_user.updated_at = _now_utc()
+            session.add(existing_by_user)
             session.commit()
         return
 
     if not app_password:
-        # Ignore provisioning when app password is absent.
-        # This keeps user updates backward-compatible.
         return
 
     mailbox = session.exec(
@@ -46,38 +42,32 @@ def upsert_user_mail_access(
             MailboxConfig.email == email,
         )
     ).first()
+
     if not mailbox:
+        if existing_by_user:
+            existing_by_user.user_id = None
+            existing_by_user.mail_access_type = None
+            session.add(existing_by_user)
         mailbox = MailboxConfig(
             scope_type=MailboxScopeType.USER_LINKED,
             email=email,
+            user_id=user_id,
+            mail_access_type=access_type,
             encrypted_app_password=encrypt_secret(app_password),
         )
         session.add(mailbox)
         session.commit()
-        session.refresh(mailbox)
-    else:
-        mailbox.encrypted_app_password = encrypt_secret(app_password)
-        mailbox.updated_at = _now_utc()
-        mailbox.is_active = True
-        session.add(mailbox)
-        session.commit()
-        session.refresh(mailbox)
-
-    if existing_link:
-        existing_link.mailbox_config_id = mailbox.id
-        existing_link.access_type = access_type
-        existing_link.is_active = True
-        existing_link.updated_at = _now_utc()
-        session.add(existing_link)
-        session.commit()
         return
 
-    session.add(
-        UserMailAccess(
-            user_id=user_id,
-            mailbox_config_id=mailbox.id,
-            access_type=access_type,
-            is_active=True,
-        )
-    )
+    if existing_by_user and existing_by_user.id != mailbox.id:
+        existing_by_user.user_id = None
+        existing_by_user.mail_access_type = None
+        session.add(existing_by_user)
+
+    mailbox.user_id = user_id
+    mailbox.mail_access_type = access_type
+    mailbox.encrypted_app_password = encrypt_secret(app_password)
+    mailbox.updated_at = _now_utc()
+    mailbox.is_active = True
+    session.add(mailbox)
     session.commit()
