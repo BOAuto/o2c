@@ -62,7 +62,7 @@ services:
       start_period: 180s
 
   temporal-ui:
-    image: temporalio/ui:2.37.1
+    image: temporalio/ui:2.49.1
     restart: always
     networks:
       - traefik-public
