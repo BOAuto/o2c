@@ -220,8 +220,12 @@ class O2CMessageIngestionWorkflow:
             )
             if not hop.get("found"):
                 workflow.logger.info(
-                    "Stopping hop traversal because in-reply-to message was not found",
-                    extra={"order_ingestion_id": order_id, "in_reply_to": str(irt)},
+                    "Stopping hop traversal; in-reply-to resolution did not return a message",
+                    extra={
+                        "order_ingestion_id": order_id,
+                        "in_reply_to": str(irt),
+                        "reason": hop.get("reason"),
+                    },
                 )
                 break
             pid = str(hop.get("message_id_norm") or "")

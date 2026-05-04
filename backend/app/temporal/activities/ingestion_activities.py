@@ -390,9 +390,12 @@ def save_order_user_html_eml_from_hop_activity(
     order_user_email: str,
 ) -> dict[str, Any]:
     oid = uuid.UUID(order_ingestion_id)
-    msg = imap_pool.fetch_message_by_uid(mailbox_email, str(imap_uid))
-    if not msg:
+    fetch_res = imap_pool.fetch_message_by_uid(mailbox_email, str(imap_uid))
+    if fetch_res.reason == imap_pool.IMAP_SENDER_MAILBOX_ERROR:
+        return {"saved": False, "reason": imap_pool.IMAP_SENDER_MAILBOX_ERROR}
+    if not fetch_res.message:
         return {"saved": False, "reason": "hop_message_not_found"}
+    msg = fetch_res.message
 
     recipient_emails = {
         str(a.email).strip().lower()
@@ -527,12 +530,12 @@ def resolve_in_reply_to_hop_activity(in_reply_to: str, sender_email: str | None 
             "reason": "sender_mailbox_not_in_pool",
             "sender_email": mailbox_email,
         }
-    msg = imap_pool.find_message_in_sender_inbox(mailbox_email, target_id)
-    if not msg:
-        activity.logger.info(
-            "resolve_in_reply_to_hop_activity: found=false",
+    inbox_res = imap_pool.find_message_in_sender_inbox(mailbox_email, target_id)
+    if inbox_res.error_reason == imap_pool.IMAP_SENDER_MAILBOX_ERROR:
+        activity.logger.warning(
+            "resolve_in_reply_to_hop_activity: found=false (IMAP transport)",
             extra={
-                "reason": "message_id_not_found_in_sender_mailbox",
+                "reason": imap_pool.IMAP_SENDER_MAILBOX_ERROR,
                 "in_reply_to": in_reply_to,
                 "sender_email": sender_email,
                 "target_id": target_id,
@@ -541,10 +544,45 @@ def resolve_in_reply_to_hop_activity(in_reply_to: str, sender_email: str | None 
         )
         return {
             "found": False,
-            "reason": "message_id_not_found_in_sender_mailbox",
+            "reason": imap_pool.IMAP_SENDER_MAILBOX_ERROR,
             "sender_email": mailbox_email,
             "target_id": target_id,
         }
+    if inbox_res.error_reason == imap_pool.SENDER_MAILBOX_NOT_IN_POOL:
+        activity.logger.info(
+            "resolve_in_reply_to_hop_activity: found=false",
+            extra={
+                "reason": imap_pool.SENDER_MAILBOX_NOT_IN_POOL,
+                "in_reply_to": in_reply_to,
+                "sender_email": sender_email,
+                "target_id": target_id,
+                "mailbox_email": mailbox_email,
+            },
+        )
+        return {
+            "found": False,
+            "reason": imap_pool.SENDER_MAILBOX_NOT_IN_POOL,
+            "sender_email": mailbox_email,
+            "target_id": target_id,
+        }
+    if not inbox_res.message:
+        activity.logger.info(
+            "resolve_in_reply_to_hop_activity: found=false",
+            extra={
+                "reason": imap_pool.MESSAGE_ID_NOT_FOUND_IN_SENDER_MAILBOX,
+                "in_reply_to": in_reply_to,
+                "sender_email": sender_email,
+                "target_id": target_id,
+                "mailbox_email": mailbox_email,
+            },
+        )
+        return {
+            "found": False,
+            "reason": imap_pool.MESSAGE_ID_NOT_FOUND_IN_SENDER_MAILBOX,
+            "sender_email": mailbox_email,
+            "target_id": target_id,
+        }
+    msg = inbox_res.message
     uid = msg.uid or ""
     mid = normalize_message_id(get_header_single(msg, "message-id"))
     next_irt = get_header_single(msg, "in-reply-to")
@@ -581,7 +619,14 @@ def persist_external_correspondent_activity(
     imap_uid: str,
 ) -> None:
     oid = uuid.UUID(order_ingestion_id)
-    msg = imap_pool.fetch_message_by_uid(mailbox_email, str(imap_uid))
+    fetch_res = imap_pool.fetch_message_by_uid(mailbox_email, str(imap_uid))
+    if fetch_res.reason == imap_pool.IMAP_SENDER_MAILBOX_ERROR:
+        logger.warning(
+            "persist_external_correspondent_activity: IMAP error fetching hop message",
+            extra={"order_ingestion_id": order_ingestion_id, "mailbox_email": mailbox_email},
+        )
+        return
+    msg = fetch_res.message
     if not msg:
         return
     with Session(engine) as session:
@@ -631,7 +676,14 @@ def save_po_html_if_needed_activity(
                 "saved_html_fallback": False,
                 "reason": "html_fallback_already_saved",
             }
-    msg = imap_pool.fetch_message_by_uid(mailbox_email, str(imap_uid))
+    fetch_res = imap_pool.fetch_message_by_uid(mailbox_email, str(imap_uid))
+    if fetch_res.reason == imap_pool.IMAP_SENDER_MAILBOX_ERROR:
+        return {
+            "saved_non_image_count": 0,
+            "saved_html_fallback": False,
+            "reason": imap_pool.IMAP_SENDER_MAILBOX_ERROR,
+        }
+    msg = fetch_res.message
     if not msg:
         return {
             "saved_non_image_count": 0,
