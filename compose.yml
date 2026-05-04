@@ -43,7 +43,7 @@ services:
       - temporal-db-data:/var/lib/postgresql/data
 
   temporal:
-    image: temporalio/auto-setup:1.27.2
+    image: temporalio/auto-setup:1.29.3
     restart: always
     depends_on:
       temporal-db:
